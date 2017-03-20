@@ -333,6 +333,10 @@ void video_orc_convert_I420_BGRA (guint8 * ORC_RESTRICT d1,
     const guint8 * ORC_RESTRICT s1, const guint8 * ORC_RESTRICT s2,
     const guint8 * ORC_RESTRICT s3, int p1, int p2, int p3, int p4, int p5,
     int n);
+void video_orc_convert_BGRA_I420 (guint8 * ORC_RESTRICT d1,
+    guint8 * ORC_RESTRICT d2, guint8 * ORC_RESTRICT d3,
+    const guint8 * ORC_RESTRICT s1, int p1, int p2, int p3, int p4, int p5,
+    int n);
 void video_orc_convert_I420_ARGB (guint8 * ORC_RESTRICT d1,
     const guint8 * ORC_RESTRICT s1, const guint8 * ORC_RESTRICT s2,
     const guint8 * ORC_RESTRICT s3, int p1, int p2, int p3, int p4, int p5,
@@ -22018,6 +22022,581 @@ video_orc_convert_I420_BGRA (guint8 * ORC_RESTRICT d1,
   ex->arrays[ORC_VAR_S1] = (void *) s1;
   ex->arrays[ORC_VAR_S2] = (void *) s2;
   ex->arrays[ORC_VAR_S3] = (void *) s3;
+  ex->params[ORC_VAR_P1] = p1;
+  ex->params[ORC_VAR_P2] = p2;
+  ex->params[ORC_VAR_P3] = p3;
+  ex->params[ORC_VAR_P4] = p4;
+  ex->params[ORC_VAR_P5] = p5;
+
+  func = c->exec;
+  func (ex);
+}
+#endif
+
+
+/* video_orc_convert_BGRA_I420 */
+#ifdef DISABLE_ORC
+void
+video_orc_convert_BGRA_I420 (guint8 * ORC_RESTRICT d1, guint8 * ORC_RESTRICT d2,
+    guint8 * ORC_RESTRICT d3, const guint8 * ORC_RESTRICT s1, int p1, int p2,
+    int p3, int p4, int p5, int n)
+{
+  int i;
+  orc_union16 *ORC_RESTRICT ptr0;
+  orc_int8 *ORC_RESTRICT ptr1;
+  orc_int8 *ORC_RESTRICT ptr2;
+  const orc_union64 *ORC_RESTRICT ptr4;
+  orc_union64 var46;
+#if defined(__APPLE__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && defined (__i386__)
+  volatile orc_union32 var47;
+#else
+  orc_union32 var47;
+#endif
+  orc_union32 var48;
+  orc_union32 var49;
+  orc_union32 var50;
+#if defined(__APPLE__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && defined (__i386__)
+  volatile orc_union16 var51;
+#else
+  orc_union16 var51;
+#endif
+  orc_union16 var52;
+  orc_union16 var53;
+#if defined(__APPLE__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && defined (__i386__)
+  volatile orc_int8 var54;
+#else
+  orc_int8 var54;
+#endif
+  orc_int8 var55;
+  orc_union16 var56;
+  orc_int8 var57;
+  orc_union32 var58;
+  orc_union32 var59;
+  orc_union32 var60;
+  orc_union32 var61;
+  orc_union16 var62;
+  orc_union16 var63;
+  orc_union16 var64;
+  orc_union32 var65;
+  orc_union32 var66;
+  orc_union32 var67;
+  orc_union32 var68;
+  orc_union32 var69;
+  orc_union32 var70;
+  orc_union32 var71;
+  orc_union32 var72;
+  orc_union16 var73;
+  orc_union16 var74;
+  orc_union16 var75;
+  orc_union16 var76;
+  orc_union16 var77;
+  orc_int8 var78;
+  orc_union16 var79;
+  orc_union16 var80;
+  orc_union16 var81;
+  orc_int8 var82;
+
+  ptr0 = (orc_union16 *) d1;
+  ptr1 = (orc_int8 *) d2;
+  ptr2 = (orc_int8 *) d3;
+  ptr4 = (orc_union64 *) s1;
+
+  /* 2: loadpb */
+  var47.x4[0] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var47.x4[1] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var47.x4[2] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var47.x4[3] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  /* 10: loadpw */
+  var48.x2[0] = p1;
+  var48.x2[1] = p1;
+  /* 12: loadpw */
+  var49.x2[0] = p2;
+  var49.x2[1] = p2;
+  /* 15: loadpw */
+  var50.x2[0] = p3;
+  var50.x2[1] = p3;
+  /* 19: loadpb */
+  var51.x2[0] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var51.x2[1] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  /* 25: loadpw */
+  var53.i = p4;
+  /* 28: loadpb */
+  var54 = (int) 0x00000080;     /* 128 or 6.32404e-322f */
+  /* 33: loadpw */
+  var56.i = p5;
+
+  for (i = 0; i < n; i++) {
+    /* 0: loadq */
+    var46 = ptr4[i];
+    /* 1: splitlw */
+    {
+      orc_union32 _src;
+      _src.i = var46.x2[0];
+      var58.x2[0] = _src.x2[1];
+      var59.x2[0] = _src.x2[0];
+    }
+    {
+      orc_union32 _src;
+      _src.i = var46.x2[1];
+      var58.x2[1] = _src.x2[1];
+      var59.x2[1] = _src.x2[0];
+    }
+    /* 3: subb */
+    var60.x4[0] = var58.x4[0] - var47.x4[0];
+    var60.x4[1] = var58.x4[1] - var47.x4[1];
+    var60.x4[2] = var58.x4[2] - var47.x4[2];
+    var60.x4[3] = var58.x4[3] - var47.x4[3];
+    /* 4: subb */
+    var61.x4[0] = var59.x4[0] - var47.x4[0];
+    var61.x4[1] = var59.x4[1] - var47.x4[1];
+    var61.x4[2] = var59.x4[2] - var47.x4[2];
+    var61.x4[3] = var59.x4[3] - var47.x4[3];
+    /* 5: splitwb */
+    {
+      orc_union16 _src;
+      _src.i = var60.x2[0];
+      var62.x2[0] = _src.x2[1];
+      var63.x2[0] = _src.x2[0];
+    }
+    {
+      orc_union16 _src;
+      _src.i = var60.x2[1];
+      var62.x2[1] = _src.x2[1];
+      var63.x2[1] = _src.x2[0];
+    }
+    /* 6: select0wb */
+    {
+      orc_union16 _src;
+      _src.i = var61.x2[0];
+      var64.x2[0] = _src.x2[0];
+    }
+    {
+      orc_union16 _src;
+      _src.i = var61.x2[1];
+      var64.x2[1] = _src.x2[0];
+    }
+    /* 7: splatbw */
+    var65.x2[0] = ((var62.x2[0] & 0xff) << 8) | (var62.x2[0] & 0xff);
+    var65.x2[1] = ((var62.x2[1] & 0xff) << 8) | (var62.x2[1] & 0xff);
+    /* 8: splatbw */
+    var66.x2[0] = ((var63.x2[0] & 0xff) << 8) | (var63.x2[0] & 0xff);
+    var66.x2[1] = ((var63.x2[1] & 0xff) << 8) | (var63.x2[1] & 0xff);
+    /* 9: splatbw */
+    var67.x2[0] = ((var64.x2[0] & 0xff) << 8) | (var64.x2[0] & 0xff);
+    var67.x2[1] = ((var64.x2[1] & 0xff) << 8) | (var64.x2[1] & 0xff);
+    /* 11: mulhsw */
+    var68.x2[0] = (var67.x2[0] * var48.x2[0]) >> 16;
+    var68.x2[1] = (var67.x2[1] * var48.x2[1]) >> 16;
+    /* 13: mulhsw */
+    var69.x2[0] = (var66.x2[0] * var49.x2[0]) >> 16;
+    var69.x2[1] = (var66.x2[1] * var49.x2[1]) >> 16;
+    /* 14: addw */
+    var70.x2[0] = var68.x2[0] + var69.x2[0];
+    var70.x2[1] = var68.x2[1] + var69.x2[1];
+    /* 16: mulhsw */
+    var71.x2[0] = (var65.x2[0] * var50.x2[0]) >> 16;
+    var71.x2[1] = (var65.x2[1] * var50.x2[1]) >> 16;
+    /* 17: addw */
+    var72.x2[0] = var70.x2[0] + var71.x2[0];
+    var72.x2[1] = var70.x2[1] + var71.x2[1];
+    /* 18: convssswb */
+    var73.x2[0] = ORC_CLAMP_SB (var72.x2[0]);
+    var73.x2[1] = ORC_CLAMP_SB (var72.x2[1]);
+    /* 20: addb */
+    var52.x2[0] = var73.x2[0] + var51.x2[0];
+    var52.x2[1] = var73.x2[1] + var51.x2[1];
+    /* 21: storew */
+    ptr0[i] = var52;
+    /* 22: select0lw */
+    {
+      orc_union32 _src;
+      _src.i = var72.i;
+      var74.i = _src.x2[0];
+    }
+    /* 23: select0lw */
+    {
+      orc_union32 _src;
+      _src.i = var71.i;
+      var75.i = _src.x2[0];
+    }
+    /* 24: subw */
+    var76.i = var75.i - var74.i;
+    /* 26: mulhsw */
+    var77.i = (var76.i * var53.i) >> 16;
+    /* 27: convssswb */
+    var78 = ORC_CLAMP_SB (var77.i);
+    /* 29: addb */
+    var55 = var78 + var54;
+    /* 30: storeb */
+    ptr1[i] = var55;
+    /* 31: select0lw */
+    {
+      orc_union32 _src;
+      _src.i = var68.i;
+      var79.i = _src.x2[0];
+    }
+    /* 32: subw */
+    var80.i = var79.i - var74.i;
+    /* 34: mulhsw */
+    var81.i = (var80.i * var56.i) >> 16;
+    /* 35: convssswb */
+    var82 = ORC_CLAMP_SB (var81.i);
+    /* 36: addb */
+    var57 = var82 + var54;
+    /* 37: storeb */
+    ptr2[i] = var57;
+  }
+
+}
+
+#else
+static void
+_backup_video_orc_convert_BGRA_I420 (OrcExecutor * ORC_RESTRICT ex)
+{
+  int i;
+  int n = ex->n;
+  orc_union16 *ORC_RESTRICT ptr0;
+  orc_int8 *ORC_RESTRICT ptr1;
+  orc_int8 *ORC_RESTRICT ptr2;
+  const orc_union64 *ORC_RESTRICT ptr4;
+  orc_union64 var46;
+#if defined(__APPLE__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && defined (__i386__)
+  volatile orc_union32 var47;
+#else
+  orc_union32 var47;
+#endif
+  orc_union32 var48;
+  orc_union32 var49;
+  orc_union32 var50;
+#if defined(__APPLE__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && defined (__i386__)
+  volatile orc_union16 var51;
+#else
+  orc_union16 var51;
+#endif
+  orc_union16 var52;
+  orc_union16 var53;
+#if defined(__APPLE__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && defined (__i386__)
+  volatile orc_int8 var54;
+#else
+  orc_int8 var54;
+#endif
+  orc_int8 var55;
+  orc_union16 var56;
+  orc_int8 var57;
+  orc_union32 var58;
+  orc_union32 var59;
+  orc_union32 var60;
+  orc_union32 var61;
+  orc_union16 var62;
+  orc_union16 var63;
+  orc_union16 var64;
+  orc_union32 var65;
+  orc_union32 var66;
+  orc_union32 var67;
+  orc_union32 var68;
+  orc_union32 var69;
+  orc_union32 var70;
+  orc_union32 var71;
+  orc_union32 var72;
+  orc_union16 var73;
+  orc_union16 var74;
+  orc_union16 var75;
+  orc_union16 var76;
+  orc_union16 var77;
+  orc_int8 var78;
+  orc_union16 var79;
+  orc_union16 var80;
+  orc_union16 var81;
+  orc_int8 var82;
+
+  ptr0 = (orc_union16 *) ex->arrays[0];
+  ptr1 = (orc_int8 *) ex->arrays[1];
+  ptr2 = (orc_int8 *) ex->arrays[2];
+  ptr4 = (orc_union64 *) ex->arrays[4];
+
+  /* 2: loadpb */
+  var47.x4[0] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var47.x4[1] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var47.x4[2] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var47.x4[3] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  /* 10: loadpw */
+  var48.x2[0] = ex->params[24];
+  var48.x2[1] = ex->params[24];
+  /* 12: loadpw */
+  var49.x2[0] = ex->params[25];
+  var49.x2[1] = ex->params[25];
+  /* 15: loadpw */
+  var50.x2[0] = ex->params[26];
+  var50.x2[1] = ex->params[26];
+  /* 19: loadpb */
+  var51.x2[0] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  var51.x2[1] = (int) 0x00000080;       /* 128 or 6.32404e-322f */
+  /* 25: loadpw */
+  var53.i = ex->params[27];
+  /* 28: loadpb */
+  var54 = (int) 0x00000080;     /* 128 or 6.32404e-322f */
+  /* 33: loadpw */
+  var56.i = ex->params[28];
+
+  for (i = 0; i < n; i++) {
+    /* 0: loadq */
+    var46 = ptr4[i];
+    /* 1: splitlw */
+    {
+      orc_union32 _src;
+      _src.i = var46.x2[0];
+      var58.x2[0] = _src.x2[1];
+      var59.x2[0] = _src.x2[0];
+    }
+    {
+      orc_union32 _src;
+      _src.i = var46.x2[1];
+      var58.x2[1] = _src.x2[1];
+      var59.x2[1] = _src.x2[0];
+    }
+    /* 3: subb */
+    var60.x4[0] = var58.x4[0] - var47.x4[0];
+    var60.x4[1] = var58.x4[1] - var47.x4[1];
+    var60.x4[2] = var58.x4[2] - var47.x4[2];
+    var60.x4[3] = var58.x4[3] - var47.x4[3];
+    /* 4: subb */
+    var61.x4[0] = var59.x4[0] - var47.x4[0];
+    var61.x4[1] = var59.x4[1] - var47.x4[1];
+    var61.x4[2] = var59.x4[2] - var47.x4[2];
+    var61.x4[3] = var59.x4[3] - var47.x4[3];
+    /* 5: splitwb */
+    {
+      orc_union16 _src;
+      _src.i = var60.x2[0];
+      var62.x2[0] = _src.x2[1];
+      var63.x2[0] = _src.x2[0];
+    }
+    {
+      orc_union16 _src;
+      _src.i = var60.x2[1];
+      var62.x2[1] = _src.x2[1];
+      var63.x2[1] = _src.x2[0];
+    }
+    /* 6: select0wb */
+    {
+      orc_union16 _src;
+      _src.i = var61.x2[0];
+      var64.x2[0] = _src.x2[0];
+    }
+    {
+      orc_union16 _src;
+      _src.i = var61.x2[1];
+      var64.x2[1] = _src.x2[0];
+    }
+    /* 7: splatbw */
+    var65.x2[0] = ((var62.x2[0] & 0xff) << 8) | (var62.x2[0] & 0xff);
+    var65.x2[1] = ((var62.x2[1] & 0xff) << 8) | (var62.x2[1] & 0xff);
+    /* 8: splatbw */
+    var66.x2[0] = ((var63.x2[0] & 0xff) << 8) | (var63.x2[0] & 0xff);
+    var66.x2[1] = ((var63.x2[1] & 0xff) << 8) | (var63.x2[1] & 0xff);
+    /* 9: splatbw */
+    var67.x2[0] = ((var64.x2[0] & 0xff) << 8) | (var64.x2[0] & 0xff);
+    var67.x2[1] = ((var64.x2[1] & 0xff) << 8) | (var64.x2[1] & 0xff);
+    /* 11: mulhsw */
+    var68.x2[0] = (var67.x2[0] * var48.x2[0]) >> 16;
+    var68.x2[1] = (var67.x2[1] * var48.x2[1]) >> 16;
+    /* 13: mulhsw */
+    var69.x2[0] = (var66.x2[0] * var49.x2[0]) >> 16;
+    var69.x2[1] = (var66.x2[1] * var49.x2[1]) >> 16;
+    /* 14: addw */
+    var70.x2[0] = var68.x2[0] + var69.x2[0];
+    var70.x2[1] = var68.x2[1] + var69.x2[1];
+    /* 16: mulhsw */
+    var71.x2[0] = (var65.x2[0] * var50.x2[0]) >> 16;
+    var71.x2[1] = (var65.x2[1] * var50.x2[1]) >> 16;
+    /* 17: addw */
+    var72.x2[0] = var70.x2[0] + var71.x2[0];
+    var72.x2[1] = var70.x2[1] + var71.x2[1];
+    /* 18: convssswb */
+    var73.x2[0] = ORC_CLAMP_SB (var72.x2[0]);
+    var73.x2[1] = ORC_CLAMP_SB (var72.x2[1]);
+    /* 20: addb */
+    var52.x2[0] = var73.x2[0] + var51.x2[0];
+    var52.x2[1] = var73.x2[1] + var51.x2[1];
+    /* 21: storew */
+    ptr0[i] = var52;
+    /* 22: select0lw */
+    {
+      orc_union32 _src;
+      _src.i = var72.i;
+      var74.i = _src.x2[0];
+    }
+    /* 23: select0lw */
+    {
+      orc_union32 _src;
+      _src.i = var71.i;
+      var75.i = _src.x2[0];
+    }
+    /* 24: subw */
+    var76.i = var75.i - var74.i;
+    /* 26: mulhsw */
+    var77.i = (var76.i * var53.i) >> 16;
+    /* 27: convssswb */
+    var78 = ORC_CLAMP_SB (var77.i);
+    /* 29: addb */
+    var55 = var78 + var54;
+    /* 30: storeb */
+    ptr1[i] = var55;
+    /* 31: select0lw */
+    {
+      orc_union32 _src;
+      _src.i = var68.i;
+      var79.i = _src.x2[0];
+    }
+    /* 32: subw */
+    var80.i = var79.i - var74.i;
+    /* 34: mulhsw */
+    var81.i = (var80.i * var56.i) >> 16;
+    /* 35: convssswb */
+    var82 = ORC_CLAMP_SB (var81.i);
+    /* 36: addb */
+    var57 = var82 + var54;
+    /* 37: storeb */
+    ptr2[i] = var57;
+  }
+
+}
+
+void
+video_orc_convert_BGRA_I420 (guint8 * ORC_RESTRICT d1, guint8 * ORC_RESTRICT d2,
+    guint8 * ORC_RESTRICT d3, const guint8 * ORC_RESTRICT s1, int p1, int p2,
+    int p3, int p4, int p5, int n)
+{
+  OrcExecutor _ex, *ex = &_ex;
+  static volatile int p_inited = 0;
+  static OrcCode *c = 0;
+  void (*func) (OrcExecutor *);
+
+  if (!p_inited) {
+    orc_once_mutex_lock ();
+    if (!p_inited) {
+      OrcProgram *p;
+
+#if 1
+      static const orc_uint8 bc[] = {
+        1, 9, 27, 118, 105, 100, 101, 111, 95, 111, 114, 99, 95, 99, 111, 110,
+        118, 101, 114, 116, 95, 66, 71, 82, 65, 95, 73, 52, 50, 48, 11, 2,
+        2, 11, 1, 1, 11, 1, 1, 12, 8, 8, 14, 4, 128, 0, 0, 0,
+        14, 2, 128, 0, 0, 0, 14, 1, 128, 0, 0, 0, 16, 2, 16, 2,
+        16, 2, 16, 2, 16, 2, 20, 2, 20, 1, 20, 4, 20, 4, 20, 2,
+        20, 2, 20, 2, 20, 4, 20, 4, 20, 4, 20, 4, 20, 2, 20, 2,
+        20, 2, 21, 1, 198, 34, 35, 4, 21, 2, 65, 34, 34, 16, 21, 2,
+        65, 35, 35, 16, 21, 1, 199, 36, 37, 34, 21, 1, 188, 38, 35, 21,
+        1, 151, 39, 36, 21, 1, 151, 40, 37, 21, 1, 151, 41, 38, 21, 1,
+        90, 41, 41, 24, 21, 1, 90, 40, 40, 25, 21, 1, 70, 42, 41, 40,
+        21, 1, 90, 39, 39, 26, 21, 1, 70, 42, 42, 39, 21, 1, 159, 32,
+        42, 21, 1, 33, 0, 32, 17, 190, 43, 42, 190, 44, 39, 98, 45, 44,
+        43, 90, 45, 45, 27, 159, 33, 45, 33, 1, 33, 18, 190, 44, 41, 98,
+        45, 44, 43, 90, 45, 45, 28, 159, 33, 45, 33, 2, 33, 18, 2, 0,
+
+      };
+      p = orc_program_new_from_static_bytecode (bc);
+      orc_program_set_backup_function (p, _backup_video_orc_convert_BGRA_I420);
+#else
+      p = orc_program_new ();
+      orc_program_set_name (p, "video_orc_convert_BGRA_I420");
+      orc_program_set_backup_function (p, _backup_video_orc_convert_BGRA_I420);
+      orc_program_add_destination (p, 2, "d1");
+      orc_program_add_destination (p, 1, "d2");
+      orc_program_add_destination (p, 1, "d3");
+      orc_program_add_source (p, 8, "s1");
+      orc_program_add_constant (p, 4, 0x00000080, "c1");
+      orc_program_add_constant (p, 2, 0x00000080, "c2");
+      orc_program_add_constant (p, 1, 0x00000080, "c3");
+      orc_program_add_parameter (p, 2, "p1");
+      orc_program_add_parameter (p, 2, "p2");
+      orc_program_add_parameter (p, 2, "p3");
+      orc_program_add_parameter (p, 2, "p4");
+      orc_program_add_parameter (p, 2, "p5");
+      orc_program_add_temporary (p, 2, "t1");
+      orc_program_add_temporary (p, 1, "t2");
+      orc_program_add_temporary (p, 4, "t3");
+      orc_program_add_temporary (p, 4, "t4");
+      orc_program_add_temporary (p, 2, "t5");
+      orc_program_add_temporary (p, 2, "t6");
+      orc_program_add_temporary (p, 2, "t7");
+      orc_program_add_temporary (p, 4, "t8");
+      orc_program_add_temporary (p, 4, "t9");
+      orc_program_add_temporary (p, 4, "t10");
+      orc_program_add_temporary (p, 4, "t11");
+      orc_program_add_temporary (p, 2, "t12");
+      orc_program_add_temporary (p, 2, "t13");
+      orc_program_add_temporary (p, 2, "t14");
+
+      orc_program_append_2 (p, "splitlw", 1, ORC_VAR_T3, ORC_VAR_T4, ORC_VAR_S1,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "subb", 2, ORC_VAR_T3, ORC_VAR_T3, ORC_VAR_C1,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "subb", 2, ORC_VAR_T4, ORC_VAR_T4, ORC_VAR_C1,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "splitwb", 1, ORC_VAR_T5, ORC_VAR_T6, ORC_VAR_T3,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "select0wb", 1, ORC_VAR_T7, ORC_VAR_T4,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "splatbw", 1, ORC_VAR_T8, ORC_VAR_T5, ORC_VAR_D1,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "splatbw", 1, ORC_VAR_T9, ORC_VAR_T6, ORC_VAR_D1,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "splatbw", 1, ORC_VAR_T10, ORC_VAR_T7,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "mulhsw", 1, ORC_VAR_T10, ORC_VAR_T10,
+          ORC_VAR_P1, ORC_VAR_D1);
+      orc_program_append_2 (p, "mulhsw", 1, ORC_VAR_T9, ORC_VAR_T9, ORC_VAR_P2,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "addw", 1, ORC_VAR_T11, ORC_VAR_T10, ORC_VAR_T9,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "mulhsw", 1, ORC_VAR_T8, ORC_VAR_T8, ORC_VAR_P3,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "addw", 1, ORC_VAR_T11, ORC_VAR_T11, ORC_VAR_T8,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "convssswb", 1, ORC_VAR_T1, ORC_VAR_T11,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "addb", 1, ORC_VAR_D1, ORC_VAR_T1, ORC_VAR_C2,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "select0lw", 0, ORC_VAR_T12, ORC_VAR_T11,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "select0lw", 0, ORC_VAR_T13, ORC_VAR_T8,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "subw", 0, ORC_VAR_T14, ORC_VAR_T13, ORC_VAR_T12,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "mulhsw", 0, ORC_VAR_T14, ORC_VAR_T14,
+          ORC_VAR_P4, ORC_VAR_D1);
+      orc_program_append_2 (p, "convssswb", 0, ORC_VAR_T2, ORC_VAR_T14,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "addb", 0, ORC_VAR_D2, ORC_VAR_T2, ORC_VAR_C3,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "select0lw", 0, ORC_VAR_T13, ORC_VAR_T10,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "subw", 0, ORC_VAR_T14, ORC_VAR_T13, ORC_VAR_T12,
+          ORC_VAR_D1);
+      orc_program_append_2 (p, "mulhsw", 0, ORC_VAR_T14, ORC_VAR_T14,
+          ORC_VAR_P5, ORC_VAR_D1);
+      orc_program_append_2 (p, "convssswb", 0, ORC_VAR_T2, ORC_VAR_T14,
+          ORC_VAR_D1, ORC_VAR_D1);
+      orc_program_append_2 (p, "addb", 0, ORC_VAR_D3, ORC_VAR_T2, ORC_VAR_C3,
+          ORC_VAR_D1);
+#endif
+
+      orc_program_compile (p);
+      c = orc_program_take_code (p);
+      orc_program_free (p);
+    }
+    p_inited = TRUE;
+    orc_once_mutex_unlock ();
+  }
+  ex->arrays[ORC_VAR_A2] = c;
+  ex->program = 0;
+
+  ex->n = n;
+  ex->arrays[ORC_VAR_D1] = d1;
+  ex->arrays[ORC_VAR_D2] = d2;
+  ex->arrays[ORC_VAR_D3] = d3;
+  ex->arrays[ORC_VAR_S1] = (void *) s1;
   ex->params[ORC_VAR_P1] = p1;
   ex->params[ORC_VAR_P2] = p2;
   ex->params[ORC_VAR_P3] = p3;

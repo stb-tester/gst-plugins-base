@@ -3752,6 +3752,82 @@ convert_I420_pack_ARGB (GstVideoConverter * convert, const GstVideoFrame * src,
 #endif
 
 static void
+convert_BGRA_I420 (GstVideoConverter * convert, const GstVideoFrame * src,
+    GstVideoFrame * dest)
+{
+  int i;
+  gint width = convert->in_width;
+  gint height = convert->in_height;
+  MatrixData *data = &convert->to_RGB_matrix;
+
+  for (i = 0; i < height; i++) {
+    guint8 *dy, *du, *dv, *s;
+
+    dy = FRAME_GET_Y_LINE (src, i + convert->out_y);
+    dy += convert->out_x;
+    du = FRAME_GET_U_LINE (src, (i + convert->out_y) >> 1);
+    du += (convert->out_x >> 1);
+    dv = FRAME_GET_V_LINE (src, (i + convert->out_y) >> 1);
+    dv += (convert->out_x >> 1);
+    s = FRAME_GET_LINE (dest, i + convert->in_y);
+    s += (convert->in_x * 4);
+
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+    video_orc_convert_BGRA_I420 (dy, du, dv, s,
+        data->im[0][0], data->im[0][2],
+        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+#else
+    video_orc_convert_RGBA_I420 (dy, du, dv, s,
+        data->im[0][0], data->im[0][2],
+        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+#endif
+  }
+  convert_fill_border (convert, dest);
+}
+
+static void
+convert_pack_BGRA_I420 (GstVideoConverter * convert, const GstVideoFrame * src,
+    GstVideoFrame * dest)
+{
+  int i;
+  gpointer tmp = convert->tmpline;
+  gint width = convert->in_width;
+  gint height = convert->in_height;
+  MatrixData *data = &convert->to_RGB_matrix;
+
+  for (i = 0; i < height; i++) {
+    guint8 *dy, *du, *dv, *s;
+
+    dy = FRAME_GET_Y_LINE (src, i + convert->out_y);
+    dy += convert->out_x;
+    du = FRAME_GET_U_LINE (src, (i + convert->out_y) >> 1);
+    du += (convert->out_x >> 1);
+    dv = FRAME_GET_V_LINE (src, (i + convert->out_y) >> 1);
+    dv += (convert->out_x >> 1);
+    s = FRAME_GET_LINE (dest, i + convert->in_y);
+    s += (convert->in_x * 4);
+
+    src->info.finfo->unpack_func (dest->info.finfo,
+        (GST_VIDEO_FRAME_IS_INTERLACED (dest) ?
+            GST_VIDEO_PACK_FLAG_INTERLACED :
+            GST_VIDEO_PACK_FLAG_NONE),
+        tmp, 0, s, dest->info.stride,
+        dest->info.chroma_site, i + convert->in_y, width);
+
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+    video_orc_convert_BGRA_I420 (dy, du, dv, tmp,
+        data->im[0][0], data->im[0][2],
+        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+#else
+    video_orc_convert_RGBA_I420 (dy, du, dv, tmp,
+        data->im[0][0], data->im[0][2],
+        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+#endif
+  }
+  convert_fill_border (convert, dest);
+}
+
+static void
 memset_u24 (guint8 * data, guint8 col[3], unsigned int n)
 {
   unsigned int i;
@@ -4793,6 +4869,11 @@ static const VideoTransform transforms[] = {
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_I420_pack_ARGB},
   {GST_VIDEO_FORMAT_I420, GST_VIDEO_FORMAT_BGR16, FALSE, TRUE, TRUE, TRUE,
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_I420_pack_ARGB},
+
+  {GST_VIDEO_FORMAT_BGR, GST_VIDEO_FORMAT_I420, FALSE, TRUE, TRUE, TRUE,
+      TRUE, FALSE, FALSE, FALSE, 0, 0, convert_pack_BGRA_I420},
+  {GST_VIDEO_FORMAT_BGRA, GST_VIDEO_FORMAT_I420, FALSE, TRUE, TRUE, TRUE,
+      TRUE, FALSE, FALSE, FALSE, 0, 0, convert_BGRA_I420},
 
   {GST_VIDEO_FORMAT_YV12, GST_VIDEO_FORMAT_ABGR, FALSE, TRUE, TRUE, TRUE,
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_I420_pack_ARGB},

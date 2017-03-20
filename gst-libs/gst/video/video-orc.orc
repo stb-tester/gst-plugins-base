@@ -1696,6 +1696,76 @@ mergebw wb, b, g
 mergewl x, wb, wr
 x4 addb argb, x, c4128
 
+.function video_orc_convert_BGRA_I420
+.dest 2 y guint8
+.dest 1 u guint8
+.dest 1 v guint8
+.source 8 bgra guint8
+.param 2 p1
+.param 2 p2
+.param 2 p3
+.param 2 p4
+.param 2 p5
+
+.temp 2 y_temp
+.temp 1 c_temp
+
+.temp 4 bg
+.temp 4 ra
+.temp 2 b
+.temp 2 g
+.temp 2 r
+
+.temp 4 wb
+.temp 4 wg
+.temp 4 wr
+
+.temp 4 wy
+.temp 2 wy1
+.temp 2 wc1
+.temp 2 wc
+
+.const 4 c4128 128
+.const 2 c2128 128
+.const 1 c128 128
+
+# Unpacking into components
+x2 splitlw bg, ra, bgra
+x4 subb bg, bg, c4128
+x4 subb ra, ra, c4128
+x2 splitwb b, g, bg
+x2 select0wb r, ra
+
+# Calculate Y:
+x2 splatbw wb, b
+x2 splatbw wg, g
+x2 splatbw wr, r
+
+x2 mulhsw wr, wr, p1
+x2 mulhsw wg, wg, p2
+x2 addw wy, wr, wg
+x2 mulhsw wb, wb, p3
+x2 addw wy, wy, wb
+
+x2 convssswb y_temp, wy
+x2 addb y, y_temp, c2128
+
+select0lw wy1, wy
+
+# Calculate U
+select0lw wc1, wb
+subw wc, wc1, wy1
+mulhsw wc, wc, p4
+convssswb c_temp, wc
+addb u, c_temp, c128
+
+# Calculate V
+select0lw wc1, wr
+subw wc, wc1, wy1
+mulhsw wc, wc, p5
+convssswb c_temp, wc
+addb v, c_temp, c128
+
 .function video_orc_convert_I420_ARGB
 .dest 4 argb guint8
 .source 1 y guint8
