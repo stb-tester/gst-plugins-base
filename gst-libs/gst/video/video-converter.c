@@ -3751,6 +3751,69 @@ convert_I420_pack_ARGB (GstVideoConverter * convert, const GstVideoFrame * src,
 }
 #endif
 
+#ifdef __arm__
+static void
+neon_asm_convert_BGR_I420 (uint8_t * __restrict dest_y,
+    uint8_t * __restrict dest_u, uint8_t * __restrict dest_v,
+    const uint8_t * __restrict src, int n)
+{
+  memset(dest_u, 128, n / 2);
+  memset(dest_v, 128, n / 2);
+  asm volatile(
+       "lsr          %[n], %[n], #3  \n" // n /= 8 (we're dealing with 8px at a time)
+       "# build the three constants: \n"
+       "mov         r4, #28          \n" // Blue channel multiplier
+       "mov         r5, #151         \n" // Green channel multiplier
+       "mov         r6, #77          \n" // Red channel multiplier
+       "vdup.8      d4, r4           \n"
+       "vdup.8      d5, r5           \n"
+       "vdup.8      d6, r6           \n"
+       ".loop_%=:                    \n"
+       "# load 8 pixels:             \n"
+       "vld3.8      {d0-d2}, [%[src]]!   \n"
+       "# do the weight average:     \n"
+       "vmull.u8    q7, d0, d4       \n"
+       "vmlal.u8    q7, d1, d5       \n"
+       "vmlal.u8    q7, d2, d6       \n"
+       "# shift and store:           \n"
+       "vshrn.u16   d7, q7, #8       \n" // Divide q3 by 256 and store in the d7
+       "vst1.8      {d7}, [%[dest_y]]!      \n"
+       "subs        %[n], %[n], #1       \n" // Decrement iteration count
+       "bne         .loop_%=         \n" // Repeat unil iteration count is not zero
+       : [dest_y]"+r"(dest_y), [src]"+r"(src), [n]"+r"(n)
+       :
+       : "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "q7", "cc", "memory"
+       );
+}
+
+static void
+neon_convert_pack_BGRA_I420 (GstVideoConverter * convert,
+    const GstVideoFrame * src, GstVideoFrame * dest)
+{
+  int i;
+  gint width = convert->in_width;
+  gint height = convert->in_height;
+  guint8 t[width * 4];
+  MatrixData *data = &convert->to_RGB_matrix;
+
+  for (i = 0; i < height; i++) {
+    guint8 *dy, *du, *dv, *s;
+
+    dy = FRAME_GET_Y_LINE (dest, i + convert->out_y);
+    dy += convert->out_x;
+    du = FRAME_GET_U_LINE (dest, (i + convert->out_y) >> 1);
+    du += (convert->out_x >> 1);
+    dv = FRAME_GET_V_LINE (dest, (i + convert->out_y) >> 1);
+    dv += (convert->out_x >> 1);
+    s = FRAME_GET_LINE (src, i + convert->in_y);
+    s += (convert->in_x * 3);
+
+    neon_asm_convert_BGR_I420 (dy, du, dv, s, width);
+  }
+  convert_fill_border (convert, dest);
+}
+#endif  /* __arm__ */
+
 static void
 memset_u24 (guint8 * data, guint8 col[3], unsigned int n)
 {
@@ -4793,6 +4856,11 @@ static const VideoTransform transforms[] = {
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_I420_pack_ARGB},
   {GST_VIDEO_FORMAT_I420, GST_VIDEO_FORMAT_BGR16, FALSE, TRUE, TRUE, TRUE,
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_I420_pack_ARGB},
+
+#ifdef __arm__
+  {GST_VIDEO_FORMAT_BGR, GST_VIDEO_FORMAT_I420, FALSE, TRUE, TRUE, TRUE,
+      TRUE, FALSE, FALSE, FALSE, 0, 0, neon_convert_pack_BGRA_I420},
+#endif /* __arm__ */
 
   {GST_VIDEO_FORMAT_YV12, GST_VIDEO_FORMAT_ABGR, FALSE, TRUE, TRUE, TRUE,
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_I420_pack_ARGB},
