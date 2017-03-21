@@ -27,6 +27,7 @@
 #include <glib.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "video-orc.h"
 
@@ -3763,19 +3764,19 @@ convert_BGRA_I420 (GstVideoConverter * convert, const GstVideoFrame * src,
   for (i = 0; i < height; i++) {
     guint8 *dy, *du, *dv, *s;
 
-    dy = FRAME_GET_Y_LINE (src, i + convert->out_y);
+    dy = FRAME_GET_Y_LINE (dest, i + convert->out_y);
     dy += convert->out_x;
-    du = FRAME_GET_U_LINE (src, (i + convert->out_y) >> 1);
+    du = FRAME_GET_U_LINE (dest, (i + convert->out_y) >> 1);
     du += (convert->out_x >> 1);
-    dv = FRAME_GET_V_LINE (src, (i + convert->out_y) >> 1);
+    dv = FRAME_GET_V_LINE (dest, (i + convert->out_y) >> 1);
     dv += (convert->out_x >> 1);
-    s = FRAME_GET_LINE (dest, i + convert->in_y);
+    s = FRAME_GET_LINE (src, i + convert->in_y);
     s += (convert->in_x * 4);
 
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
     video_orc_convert_BGRA_I420 (dy, du, dv, s,
-        data->im[0][0], data->im[0][2],
-        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+        299 * 256 / 1000, 587 * 256 / 1000, 114 * 256 / 1000,
+        0.492 * 128 / 0.701, 0.877 * 128 / 0.701, width / 2);
 #else
     video_orc_convert_RGBA_I420 (dy, du, dv, s,
         data->im[0][0], data->im[0][2],
@@ -3790,38 +3791,53 @@ convert_pack_BGRA_I420 (GstVideoConverter * convert, const GstVideoFrame * src,
     GstVideoFrame * dest)
 {
   int i;
-  gpointer tmp = convert->tmpline;
   gint width = convert->in_width;
   gint height = convert->in_height;
+  guint8 t[width * 4];
   MatrixData *data = &convert->to_RGB_matrix;
 
   for (i = 0; i < height; i++) {
     guint8 *dy, *du, *dv, *s;
 
-    dy = FRAME_GET_Y_LINE (src, i + convert->out_y);
+    dy = FRAME_GET_Y_LINE (dest, i + convert->out_y);
     dy += convert->out_x;
-    du = FRAME_GET_U_LINE (src, (i + convert->out_y) >> 1);
+    du = FRAME_GET_U_LINE (dest, (i + convert->out_y) >> 1);
     du += (convert->out_x >> 1);
-    dv = FRAME_GET_V_LINE (src, (i + convert->out_y) >> 1);
+    dv = FRAME_GET_V_LINE (dest, (i + convert->out_y) >> 1);
     dv += (convert->out_x >> 1);
-    s = FRAME_GET_LINE (dest, i + convert->in_y);
-    s += (convert->in_x * 4);
+    s = FRAME_GET_LINE (src, i + convert->in_y);
+    s += (convert->in_x * 3);
 
-    src->info.finfo->unpack_func (dest->info.finfo,
+    for (int j = 0; j < width; j += 4) {
+      t[j * 4] = s[j * 3];
+      t[j * 4 + 1] = s[j * 3 + 1];
+      t[j * 4 + 2] = s[j * 3 + 2];
+      t[j * 4 + 4] = s[j * 3 + 3];
+      t[j * 4 + 5] = s[j * 3 + 4];
+      t[j * 4 + 6] = s[j * 3 + 5];
+      t[j * 4 + 8] = s[j * 3 + 6];
+      t[j * 4 + 9] = s[j * 3 + 7];
+      t[j * 4 + 10] = s[j * 3 + 8];
+      t[j * 4 + 12] = s[j * 3 + 9];
+      t[j * 4 + 13] = s[j * 3 + 10];
+      t[j * 4 + 14] = s[j * 3 + 11];
+    }
+
+/*    src->info.finfo->unpack_func (src->info.finfo,
         (GST_VIDEO_FRAME_IS_INTERLACED (dest) ?
             GST_VIDEO_PACK_FLAG_INTERLACED :
             GST_VIDEO_PACK_FLAG_NONE),
-        tmp, 0, s, dest->info.stride,
+        tmp, s, dest->info.stride,
         dest->info.chroma_site, i + convert->in_y, width);
-
+*/
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    video_orc_convert_BGRA_I420 (dy, du, dv, tmp,
-        data->im[0][0], data->im[0][2],
-        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+    video_orc_convert_BGRA_I420 (dy, du, dv, t,
+        299 * 256 / 1000, 587 * 256 / 1000, 114 * 256 / 1000,
+        0.492 * 128 / 0.701, 0.877 * 128 / 0.701, width / 2);
 #else
     video_orc_convert_RGBA_I420 (dy, du, dv, tmp,
-        data->im[0][0], data->im[0][2],
-        data->im[2][1], data->im[1][1], data->im[1][2], width / 2);
+        data->im[0][0], data->im[0][1],
+        data->im[0][2], data->im[1][1], data->im[1][2], width / 2);
 #endif
   }
   convert_fill_border (convert, dest);

@@ -1697,74 +1697,97 @@ mergewl x, wb, wr
 x4 addb argb, x, c4128
 
 .function video_orc_convert_BGRA_I420
-.dest 2 y guint8
+.dest 2 yy guint8
 .dest 1 u guint8
 .dest 1 v guint8
-.source 8 bgra guint8
+.source 8 bgrabgra guint8
 .param 2 p1
 .param 2 p2
 .param 2 p3
 .param 2 p4
 .param 2 p5
 
-.temp 2 y_temp
+.temp 4 yy_temp
+.temp 4 yy_temp2
 .temp 1 c_temp
 
-.temp 4 bg
-.temp 4 ra
-.temp 2 b
-.temp 2 g
-.temp 2 r
+.temp 4 bgbg
+.temp 4 rara
+.temp 2 bb
+.temp 2 gg
+.temp 2 rr
 
-.temp 4 wb
-.temp 4 wg
-.temp 4 wr
+.temp 4 wbb
+.temp 4 wgg
+.temp 4 wrr
 
-.temp 4 wy
+.temp 4 wyy
 .temp 2 wy1
 .temp 2 wc1
 .temp 2 wc
 
 .const 4 c4128 128
 .const 2 c2128 128
-.const 1 c128 128
+.const 1 c128  128
+.const 1 c127  127
+.const 1 c129  129
+#.const 2 c32768 32768
+.const 2 c0 0
 
 # Unpacking into components
-x2 splitlw bg, ra, bgra
-x4 subb bg, bg, c4128
-x4 subb ra, ra, c4128
-x2 splitwb b, g, bg
-x2 select0wb r, ra
+x2 splitlw rara, bgbg, bgrabgra
+#x4 subb bgbg, bgbg, c128
+#x4 subb rara, rara, c128
+x2 splitwb gg, bb, bgbg
+x2 select0wb rr, rara
 
 # Calculate Y:
-x2 splatbw wb, b
-x2 splatbw wg, g
-x2 splatbw wr, r
+x2 convubw wbb, bb
+x2 convubw wgg, gg
+x2 convubw wrr, rr
 
-x2 mulhsw wr, wr, p1
-x2 mulhsw wg, wg, p2
-x2 addw wy, wr, wg
-x2 mulhsw wb, wb, p3
-x2 addw wy, wy, wb
+#x2 subw wbb, wbb, c2128
+#x2 subw wgg, wgg, c2128
+#x2 subw wrr, wrr, c2128
 
-x2 convssswb y_temp, wy
-x2 addb y, y_temp, c2128
+x2 mullw wyy, wrr, p1
+x2 mullw yy_temp, wgg, p2
+x2 addw yy_temp2, wyy, yy_temp
+x2 mullw yy_temp, wbb, p3
+x2 addw wyy, yy_temp2, yy_temp
 
-select0lw wy1, wy
+#x2 convhwb yy, wyy
+#x2 addw yy_temp, wyy, c2128
+#x2 copyw wyy, wbb
+#x2 convuuswb yy, wyy
+x2 convhwb yy, wyy
+
+select0lw wy1, wyy
+shruw wy1, wy1, 8
 
 # Calculate U
-select0lw wc1, wb
+select0lw wc1, wbb
+#shlw wc1, wc1, 8
+
 subw wc, wc1, wy1
-mulhsw wc, wc, p4
-convssswb c_temp, wc
+mullw wc, wc, p4
+#convssswb u, wc
+#copyw wc, c0
+convhwb c_temp, wc
 addb u, c_temp, c128
+#copyb u, c128
 
 # Calculate V
-select0lw wc1, wr
+select0lw wc1, wrr
+#shlw wc1, wc1, 8
+
 subw wc, wc1, wy1
-mulhsw wc, wc, p5
-convssswb c_temp, wc
+mullw wc, wc, p5
+#convssswb v, wc
+#copyw wc, c0
+convhwb c_temp, wc
 addb v, c_temp, c128
+#copyb v, c128
 
 .function video_orc_convert_I420_ARGB
 .dest 4 argb guint8
