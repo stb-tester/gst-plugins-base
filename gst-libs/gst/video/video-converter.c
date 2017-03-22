@@ -27,7 +27,6 @@
 #include <glib.h>
 #include <string.h>
 #include <math.h>
-#include <stdio.h>
 
 #include "video-orc.h"
 
@@ -4889,6 +4888,8 @@ static const VideoTransform transforms[] = {
   {GST_VIDEO_FORMAT_BGR, GST_VIDEO_FORMAT_I420, FALSE, TRUE, TRUE, TRUE,
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_pack_BGRA_I420},
   {GST_VIDEO_FORMAT_BGRA, GST_VIDEO_FORMAT_I420, FALSE, TRUE, TRUE, TRUE,
+      TRUE, FALSE, FALSE, FALSE, 0, 0, convert_BGRA_I420},
+  {GST_VIDEO_FORMAT_BGRx, GST_VIDEO_FORMAT_I420, FALSE, TRUE, TRUE, TRUE,
       TRUE, FALSE, FALSE, FALSE, 0, 0, convert_BGRA_I420},
 
   {GST_VIDEO_FORMAT_YV12, GST_VIDEO_FORMAT_ABGR, FALSE, TRUE, TRUE, TRUE,
