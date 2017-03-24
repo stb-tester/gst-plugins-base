@@ -3753,36 +3753,134 @@ convert_I420_pack_ARGB (GstVideoConverter * convert, const GstVideoFrame * src,
 
 #ifdef __arm__
 static void
-neon_asm_convert_BGR_I420 (uint8_t * __restrict dest_y,
+neon_asm_convert_BGR_I420 (
+    uint8_t * __restrict dest_y1, uint8_t * __restrict dest_y2,
     uint8_t * __restrict dest_u, uint8_t * __restrict dest_v,
-    const uint8_t * __restrict src, int n)
+    const uint8_t * __restrict src1, const uint8_t * __restrict src2, int n)
 {
-  memset(dest_u, 128, n / 2);
-  memset(dest_v, 128, n / 2);
+  /* Register map:
+
+      q0  Bt         B   U/2   U
+
+      q1  Gt   Yt    Y
+
+      q2  Rt         R   V/2   V
+
+      q3  Bb
+
+      q4  Gb   Yb
+
+      q5  Rb
+
+      q6  Temporaries
+
+      q7  Temporaries
+
+      q12 C_bu
+
+      q13 C_rv
+
+      d28 C_by
+      d29 C_gy
+      d30 C_ry
+
+    Here's a couple of interesting instructions:
+
+     VHADD (vector halving add) - useful for vertical subsampling
+     VPADD (pairwise add) - useful for horizontal subsampling
+ */
   asm volatile(
-       "lsr          %[n], %[n], #3  \n" // n /= 8 (we're dealing with 8px at a time)
+       "lsr          %[n], %[n], #4  \n" // n /= 16 (we're dealing with 16px horizontal at a time)
        "# build the three constants: \n"
-       "mov         r4, #28          \n" // Blue channel multiplier
-       "mov         r5, #151         \n" // Green channel multiplier
-       "mov         r6, #77          \n" // Red channel multiplier
-       "vdup.8      d4, r4           \n"
-       "vdup.8      d5, r5           \n"
-       "vdup.8      d6, r6           \n"
+       "mov         r1, #28          \n" // Blue channel multiplier
+       "vdup.8      d28, r1          \n"
+       "mov         r1, #151         \n" // Green channel multiplier
+       "vdup.8      d29, r1          \n"
+       "mov         r1, #77          \n" // Red channel multiplier
+       "vdup.8      d30, r1          \n"
+       "mov         r1, #128         \n" // 128
+       "vdup.8      d31, r1          \n"
+       "mov         r1, #44          \n" // U multiplier (/2 for subsampling)
+       "vdup.16     q12, r1          \n"
+       "mov         r1, #80          \n" // V multiplier (/2 for subsampling)
+       "vdup.16     q13, r1          \n"
        ".loop_%=:                    \n"
-       "# load 8 pixels:             \n"
-       "vld3.8      {d0-d2}, [%[src]]!   \n"
-       "# do the weight average:     \n"
-       "vmull.u8    q7, d0, d4       \n"
-       "vmlal.u8    q7, d1, d5       \n"
-       "vmlal.u8    q7, d2, d6       \n"
+
+       /* Top line */
+       "# load 8 pixels from first line:  \n"
+       "vld3.8      {d0, d2, d4}, [%[src1]]!   \n"
+       "vld3.8      {d1, d3, d5}, [%[src1]]!   \n"
+       /* {q0, q1, q2} is now Bt, Gt, Rt */
+       "# do the weighted average:   \n"
+       "vmull.u8    q6, d28, d0      \n"
+       "vmlal.u8    q6, d29, d2      \n"
+       "vmlal.u8    q6, d30, d4      \n"
+       "vshrn.u16   d2, q6, #8      \n"
+
+       "vmull.u8    q7, d28, d1      \n"
+       "vmlal.u8    q7, d29, d3      \n"
+       "vmlal.u8    q7, d30, d5      \n"
        "# shift and store:           \n"
-       "vshrn.u16   d7, q7, #8       \n" // Divide q3 by 256 and store in the d7
-       "vst1.8      {d7}, [%[dest_y]]!      \n"
+       "vshrn.u16   d3, q7, #8      \n"
+       /* q1 is now Y (top), rather than G (top) */
+       /* {q0, q1, q2} is now Bt, Yt, Rt */
+       "vst1.8 {q1}, [%[dest_y1]]!   \n"
+
+       /* Do it all again for the second line */
+       "# load 8 pixels from first line:  \n"
+       "vld3.8      {d6, d8, d10}, [%[src2]]!   \n"
+       "vld3.8      {d7, d9, d11}, [%[src2]]!   \n"
+       /* {q3, q4, q5} is now Bb, Gb, Rb */
+
+       "# do the weighted average:   \n"
+       "vmull.u8    q6, d28, d6      \n"
+       "vmlal.u8    q6, d29, d8      \n"
+       "vmlal.u8    q6, d30, d10     \n"
+       "vshrn.u16   d8, q6, #8       \n"
+
+       "vmull.u8    q7, d28, d7      \n"
+       "vmlal.u8    q7, d29, d9      \n"
+       "vmlal.u8    q7, d30, d11     \n"
+       "# shift and store:           \n"
+       "vshrn.u16   d9, q7, #8       \n"
+       /* q4 is now Y (bottom), rather than G (bottom) */
+       /* {q3, q4, q5} is now Bb, Yb, Rb */
+       "vst1.8 {q4}, [%[dest_y2]]!   \n"
+
+       /* Subsample B, Y and R vertically */
+       "vhadd.u8    q0, q0, q3       \n"
+       "vhadd.u8    q1, q1, q4       \n"
+       "vhadd.u8    q2, q2, q5       \n"
+
+       /* {q3-5} are no longer interesting at this point */
+
+       /* Subsample B, Y and R horizontally */
+       "vpaddl.u8     q0, q0       \n"
+       "vpaddl.u8     q1, q1       \n"
+       "vpaddl.u8     q2, q2       \n"
+
+       /* Multiply and subtract to get U and V */
+       "vmul.u16     q0, q0, q12      \n"
+       "vmul.u16     q2, q2, q13      \n"
+       "vmls.u16     q0, q1, q12      \n"
+       "vmls.u16     q2, q1, q13      \n"
+
+       "vshrn.i16   d0, q0, #8      \n"
+       "vshrn.i16   d4, q2, #8      \n"
+       "vadd.u8    d0, d0, d31      \n"
+       "vadd.u8    d4, d4, d31      \n"
+       "vst1.8      {d0}, [%[dest_u]]!      \n"
+       "vst1.8      {d4}, [%[dest_v]]!      \n"
+
        "subs        %[n], %[n], #1       \n" // Decrement iteration count
        "bne         .loop_%=         \n" // Repeat unil iteration count is not zero
-       : [dest_y]"+r"(dest_y), [src]"+r"(src), [n]"+r"(n)
+       : [dest_y1]"+r"(dest_y1), [dest_y2]"+r"(dest_y2),
+         [dest_u]"+r"(dest_u), [dest_v]"+r"(dest_v),
+         [src1]"+r"(src1), [src2]"+r"(src2), [n]"+r"(n)
        :
-       : "r4", "r5", "r6", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "q7", "cc", "memory"
+       : "r1",
+         "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q12", "q13", "d28", "d29", "d30",
+         "cc", "memory"
        );
 }
 
@@ -3796,19 +3894,23 @@ neon_convert_pack_BGRA_I420 (GstVideoConverter * convert,
   guint8 t[width * 4];
   MatrixData *data = &convert->to_RGB_matrix;
 
-  for (i = 0; i < height; i++) {
-    guint8 *dy, *du, *dv, *s;
+  for (i = 0; i < height; i += 2) {
+    guint8 *dy1, *dy2, *du, *dv, *s1, *s2;
 
-    dy = FRAME_GET_Y_LINE (dest, i + convert->out_y);
-    dy += convert->out_x;
+    dy1 = FRAME_GET_Y_LINE (dest, i + convert->out_y);
+    dy1 += convert->out_x;
+    dy2 = FRAME_GET_Y_LINE (dest, i + convert->out_y + 1);
+    dy2 += convert->out_x;
     du = FRAME_GET_U_LINE (dest, (i + convert->out_y) >> 1);
     du += (convert->out_x >> 1);
     dv = FRAME_GET_V_LINE (dest, (i + convert->out_y) >> 1);
     dv += (convert->out_x >> 1);
-    s = FRAME_GET_LINE (src, i + convert->in_y);
-    s += (convert->in_x * 3);
+    s1 = FRAME_GET_LINE (src, i + convert->in_y);
+    s1 += (convert->in_x * 3);
+    s2 = FRAME_GET_LINE (src, i + convert->in_y + 1);
+    s2 += (convert->in_x * 3);
 
-    neon_asm_convert_BGR_I420 (dy, du, dv, s, width);
+    neon_asm_convert_BGR_I420 (dy1, dy2, du, dv, s1, s2, width);
   }
   convert_fill_border (convert, dest);
 }
