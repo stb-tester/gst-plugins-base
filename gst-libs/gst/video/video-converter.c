@@ -3790,6 +3790,8 @@ neon_asm_convert_BGR_I420 (
      VPADD (pairwise add) - useful for horizontal subsampling
  */
   asm volatile(
+       "pld  [%[src1], #0]           \n"
+       "pld  [%[src2], #0]           \n"
        "lsr          %[n], %[n], #4  \n" // n /= 16 (we're dealing with 16px horizontal at a time)
        "# build the three constants: \n"
        "mov         r1, #28          \n" // Blue channel multiplier
@@ -3805,6 +3807,14 @@ neon_asm_convert_BGR_I420 (
        "mov         r1, #80          \n" // V multiplier (/2 for subsampling)
        "vdup.16     q13, r1          \n"
        ".loop_%=:                    \n"
+
+       /* Preload the next block of pixels.  We choose 64 rather than
+          48 (16 pixels) because the cacheline size of the Cortex-A15 is
+          64 bytes, and we want to start preloading the next cacheline,
+          the cacheline we're operating on now should already be
+          preloaded */
+       "pld  [%[src1], #64]             \n"
+       "pld  [%[src2], #64]             \n"
 
        /* Top line */
        "# load 8 pixels from first line:  \n"
