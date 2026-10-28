@@ -909,6 +909,22 @@ xrun_recovery (GstAlsaSrc * alsa, snd_pcm_t * handle, gint err)
   return err;
 }
 
+static int
+gst_alsasrc_status (GstAlsaSrc * asrc, snd_pcm_status_t * status)
+{
+#if GST_CHECK_ALSA_VERSION(1,0,29)
+  /* Ask for the time at which the samples arrived at the hardware, according
+   * to the hardware's own clock, if the driver can tell us.  Drivers that
+   * can't fall back to the default behaviour. */
+  snd_pcm_audio_tstamp_config_t config = { 0, };
+
+  /* SNDRV_PCM_AUDIO_TSTAMP_TYPE_LINK.  alsa-lib doesn't name this. */
+  config.type_requested = 2;
+  snd_pcm_status_set_audio_htstamp_config (status, &config);
+#endif
+  return snd_pcm_status (asrc->handle, status);
+}
+
 static GstClockTime
 gst_alsasrc_get_timestamp (GstAlsaSrc * asrc)
 {
@@ -928,7 +944,7 @@ gst_alsasrc_get_timestamp (GstAlsaSrc * asrc)
     return GST_CLOCK_TIME_NONE;
   }
 
-  if (G_UNLIKELY (snd_pcm_status (asrc->handle, status) != 0)) {
+  if (G_UNLIKELY (gst_alsasrc_status (asrc, status) != 0)) {
     GST_ERROR_OBJECT (asrc, "snd_pcm_status failed");
     return GST_CLOCK_TIME_NONE;
   }
@@ -939,7 +955,7 @@ gst_alsasrc_get_timestamp (GstAlsaSrc * asrc)
       GST_WARNING_OBJECT (asrc, "Could not recover from xrun condition !");
     }
     /* reload the status alsa status object, since recovery made it invalid */
-    if (G_UNLIKELY (snd_pcm_status (asrc->handle, status) != 0)) {
+    if (G_UNLIKELY (gst_alsasrc_status (asrc, status) != 0)) {
       GST_ERROR_OBJECT (asrc, "snd_pcm_status failed");
     }
   }
